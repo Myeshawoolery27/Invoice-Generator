@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice</title>
+  <style>
+    :root {
+      --main-blue: #b4ddf6;
+      --border-blue: #337da7;
+      --footer-blue: #337da7;
+      --white: #fff;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff;
+      color: #222;
+      margin: 0;
+      padding: 0;
+      max-width: 900px;
+      margin: 30px auto;
+      font-size: 0.8em;
+    }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .sender-info { min-width: 210px; margin-top: 96px; }
+    .sender-info input {
+      font-weight: bold;
+      border: none;
+      background: transparent;
+      font-size: 0.8em;
+      margin-bottom: 2px;
+      width: 98%;
+    }
+    .invoice-title-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      min-width: 208px;
+    }
+    .invoice-title {
+      font-size: 1.85em;
+      font-weight: bold;
+      margin-bottom: 9px;
+      letter-spacing: 1.6px;
+    }
+    .invoice-details-table {
+      border-collapse: collapse !important;
+      border-spacing: 0 !important;
+      width: auto;
+      min-width: 0;
+    }
+    .invoice-details-table, .invoice-details-table th, .invoice-details-table td, .invoice-details-table input {
+      font-size: 0.84em !important;
+    }
+    .invoice-details-table th, .invoice-details-table td {
+      border: 1px solid var(--border-blue);
+      background: var(--border-blue);
+      color: #fff;
+      padding: 3px 6px;
+      font-weight: 500;
+      text-align: center;
+      margin: 0 !important;
+    }
+    .invoice-details-table th:first-child,
+    .invoice-details-table td:first-child {
+      padding-left: 8px;
+      padding-right: 4px;
+      border-right: none;
+    }
+    .invoice-details-table th:last-child,
+    .invoice-details-table td:last-child {
+      padding-left: 4px;
+      padding-right: 8px;
+    }
+    .invoice-details-table input {
+      background: #fff;
+      color: #222;
+      border: none;
+      width: 90%;
+      text-align: center;
+    }
+    #invoiceNo {
+      font-size: 1.3em !important;
+    }
+    #issueDate {
+      font-size: 1.5em !important;
+    }
+    .side-info-blocks {
+      width: 200px;
+      margin-top: 6px;
+      margin-bottom: 19px;
+    }
+    .info-box {
+      border: 1px solid var(--border-blue);
+      border-radius: 3px;
+      margin-bottom: 7px;
+      background: var(--main-blue);
+      padding: 0;
+    }
+    .info-box label {
+      font-weight: bold;
+      background: var(--border-blue);
+      color: #fff;
+      padding: 5px 9px;
+      display: block;
+      border-bottom: 1px solid var(--border-blue);
+      font-size: 0.8em;
+      border-radius: 3px 3px 0 0;
+    }
+    .info-box .box-content {
+      padding: 5px 9px;
+    }
+    .info-box input, .info-box textarea {
+      border: none;
+      background: transparent;
+      width: 97%;
+      margin-bottom: 2px;
+      font-size: 0.8em;
+      color: #222;
+      resize: none;
+    }
+    .info-box textarea { min-height: 16px; }
+    /* --- Main Invoice Table --- */
+    .invoice-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: var(--main-blue);
+      margin-bottom: 10px;
+      border: 2px solid var(--border-blue); /* OUTER BORDER */
+      border-radius: 8px;
+    }
+    .invoice-table th,
+    .invoice-table td {
+      border-left: 1px solid var(--border-blue);
+      border-right: 1px solid var(--border-blue);
+      border-top: none;
+      border-bottom: none;
+    }
+    .invoice-table th:first-child,
+    .invoice-table td:first-child {
+      border-left: none;
+    }
+    .invoice-table th:last-child,
+    .invoice-table td:last-child {
+      border-right: none;
+    }
+    .invoice-table thead tr th {
+      border-top: 2px solid var(--border-blue);
+    }
+    .invoice-table tbody tr:last-child td {
+      border-bottom: 2px solid var(--border-blue);
+    }
+    .invoice-table th {
+      background: var(--border-blue);
+      color: #0f0f0f;
+      font-size: 0.8em;
+      padding: 6px 0;
+      text-align: center;
+      font-weight: 700 !important;
+      letter-spacing: 0.5px;
+    }
+    .invoice-table td {
+      padding: 2px 4px;
+      background: var(--main-blue);
+      vertical-align: top;
+      text-align: center;
+    }
+    .invoice-table input, .invoice-table textarea {
+      width: 98%;
+      background: transparent;
+      border: none;
+      color: #222;
+      font-size: 0.8em;
+      text-align: center;
+      resize: none;
+    }
+    /* Make Description input (textarea) font-size 3% bigger */
+    .invoice-table .desc-cell textarea {
+      text-align: left;
+      background: transparent;
+      min-height: 20px;
+      width: 98%;
+      color: #222;
+      resize: none;
+      overflow: hidden;
+      transition: height 0.15s;
+      font-size: 1.03em;
+    }
+    .invoice-table .amt-cell { font-weight: bold; text-align: right; padding-right: 10px; }
+    .add-row-btn {
+      background: var(--border-blue);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 2px 8px;
+    }
+    .totals-area {
+      max-width: 270px;
+      margin-left: auto;
+      margin-bottom: 12px;
+    }
+    .totals-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .totals-table td {
+      padding: 2px 7px;
+      border: 1px solid var(--border-blue);
+      background: var(--main-blue);
+      font-size: 0.8em;
+      font-weight: 600;
+      text-align: right;
+      color: #222;
+    }
+    .totals-table .label {
+      background: var(--border-blue);
+      color: #fff;
+      font-weight: bold;
+      text-align: left;
+    }
+    .footer {
+      margin-top: 8px;
+      text-align: center;
+      font-size: 0.84em;
+      background: var(--footer-blue);
+      color: #fff;
+      padding: 7px 0 3px 0;
+      border-top: 1px solid #337da7;
+    }
+    .footer-contact {
+      font-size: 0.84em;
+      color: #fff;
+      margin-top: 2px;
+    }
+    .thanks {
+      background: #f7f7f7;
+      color: #222;
+      border: 1px solid #337da7;
+      padding: 4px 0;
+      text-align: center;
+      font-size: 0.84em;
+      font-style: italic;
+    }
+    .page-number {
+      text-align: right;
+      font-size: 0.85em;
+      color: #333;
+      margin-right: 18px;
+      margin-bottom: 5px;
+    }
+    .print-btn, .clear-btn {
+      margin: 23px 7px 0 0;
+      padding:7px 15px;
+      background:#337da7;
+      color:#fff;
+      border:none;
+      border-radius:4px;
+      font-size:0.8em;
+      cursor:pointer;
+      display: inline-block;
+      width: 144px;
+    }
+    .clear-btn {
+      background: #f59b42;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      .print-btn, .clear-btn { display: none; }
+      input, textarea { border: none; background: transparent; color: #222; }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .page-number {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        margin-right: 30px;
+        margin-bottom: 10px;
+        color: #222 !important;
+        background: #fff;
+        padding: 2px 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <!-- Header Section -->
+    <div class="header-row">
+      <div class="sender-info">
+        <div><input value="Myesha Woolery" /></div>
+        <div><input value="8 St. Lucia Crescent," /></div>
+        <div><input value="Kingston 5" /></div>
+      </div>
+      <div class="invoice-title-block">
+        <div class="invoice-title">Invoice</div>
+        <table class="invoice-details-table">
+          <tr>
+            <th>Invoice #</th>
+            <th>Issue Date</th>
+          </tr>
+          <tr>
+            <td><input id="invoiceNo" value="1" /></td>
+            <td><input id="issueDate" type="date" value="2025-07-20" /></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <!-- Side Info -->
+    <div class="side-info-blocks">
+      <div class="info-box">
+        <label>Bill To:</label>
+        <div class="box-content">
+          <input value="Mayank Joshi"><br>
+          <input value="High Commissioner"><br>
+          <input value="High Commission of India"><br>
+          <input value="Kingston, Jamaica"><br>
+        </div>
+      </div>
+      <div class="info-box">
+        <label>Banking Information</label>
+        <div class="box-content">
+          <input value="Myesha Woolery"><br>
+          <input value="Scotiabank"><br>
+          <input value="Branch: UWI Mona (18465)"><br>
+          <input value="Acct Type: Chequing"><br>
+          <input value="Acct#: 000301024"><br>
+        </div>
+      </div>
+    </div>
+    <!-- Invoice Table -->
+    <form id="invoice-form" onsubmit="return false;">
+    <table class="invoice-table" id="itemsTable">
+      <thead>
+        <tr>
+          <th style="width: 60%;">Description</th>
+          <th>QTY</th>
+          <th>UNIT PRICE</th>
+          <th>AMOUNT</th>
+          <th class="no-print"><button type="button" class="add-row-btn" onclick="addRow()">+</button></th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Render 7 input rows -->
+        <tr>
+          <td class="desc-cell">
+            <textarea class="desc-input"
+              onchange="calc()"
+              onkeydown="resizeOnEnter(event, this)"
+              onkeyup="resetResizeOnEmpty(this)"></textarea>
+          </td>
+          <td><input type="number" min="1" value="" onchange="calc()"></td>
+          <td><input type="number" min="0" value="" onchange="calc()"></td>
+          <td class="amt-cell"></td>
+          <td class="no-print"></td>
+        </tr>
+        <tr>
+          <td class="desc-cell">
+            <textarea class="desc-input"
+              onchange="calc()"
+              onkeydown="resizeOnEnter(event, this)"
+              onkeyup="resetResizeOnEmpty(this)"></textarea>
+          </td>
+          <td><input type="number" min="1" value="" onchange="calc()"></td>
+          <td><input type="number" min="0" value="" onchange="calc()"></td>
+          <td class="amt-cell"></td>
+          <td class="no-print"></td>
+        </tr>
+        <tr>
+          <td class="desc-cell">
+            <textarea class="desc-input"
+              onchange="calc()"
+              onkeydown="resizeOnEnter(event, this)"
+              onkeyup="resetResizeOnEmpty(this)"></textarea>
+          </td>
+          <td><input type="number" min="1" value="" onchange="calc()"></td>
+          <td><input type="number" min="0" value="" onchange="calc()"></td>
+          <td class="amt-cell"></td>
+          <td class="no-print"></td>
+        </tr>
+        <tr>
+          <td class="desc-cell">
+            <textarea class="desc-input"
+              onchange="calc()"
+              onkeydown="resizeOnEnter(event, this)"
+              onkeyup="resetResizeOnEmpty(this)"></textarea>
+          </td>
+          <td><input type="number" min="1" value="" onchange="calc()"></td>
+          <td><input type="number" min="0" value="" onchange="calc()"></td>
+          <td class="amt-cell"></td>
+          <td class="no-print"></td>
+        </tr>
+        <tr>
+          <td class="desc-cell">
+            <textarea class="desc-input"
+              onchange="calc()"
+              onkeydown="resizeOnEnter(event, this)"
+              onkeyup="resetResizeOnEmpty(this)"></textarea>
+          </td>
+          <td><input type="number" min="1" value="" onchange="calc()"></td>
+          <td><input type="number" min="0" value="" onchange="calc()"></td>
+          <td class="amt-cell"></td>
+          <td class="no-print"></td>
+        </tr>
+        <tr>
+          <td class="desc-cell">
+            <textarea class="desc-input"
+              onchange="calc()"
+              onkeydown="resizeOnEnter(event, this)"
+              onkeyup="resetResizeOnEmpty(this)"></textarea>
+          </td>
+          <td><input type="number" min="1" value="" onchange="calc()"></td>
+          <td><input type="number" min="0" value="" onchange="calc()"></td>
+          <td class="amt-cell"></td>
+          <td class="no-print"></td>
+        </tr>
+        <tr>
+          <td class="desc-cell">
+            <textarea class="desc-input"
+              onchange="calc()"
+              onkeydown="resizeOnEnter(event, this)"
+              onkeyup="resetResizeOnEmpty(this)"></textarea>
+          </td>
+          <td><input type="number" min="1" value="" onchange="calc()"></td>
+          <td><input type="number" min="0" value="" onchange="calc()"></td>
+          <td class="amt-cell"></td>
+          <td class="no-print"></td>
+        </tr>
+      </tbody>
+    </table>
+    </form>
+    <!-- Buttons -->
+    <div>
+      <button class="print-btn no-print" onclick="window.print()">Print / Save as PDF</button>
+      <button class="clear-btn no-print" onclick="clearAndNextInvoice()">Clear & Next Invoice</button>
+    </div>
+    <!-- Totals Section -->
+    <div class="totals-area">
+      <table class="totals-table">
+        <tr>
+          <td class="label">SUBTOTAL</td>
+          <td>$ <span id="subtotal">0.00</span></td>
+        </tr>
+        <tr>
+          <td class="label">TAX RATE</td>
+          <td>
+            <input id="taxRate" type="number" value="0" onchange="calc()" style="width: 25px;text-align:right;"> %
+          </td>
+        </tr>
+        <tr>
+          <td class="label">TAX</td>
+          <td>$ <span id="tax">0.00</span></td>
+        </tr>
+        <tr>
+          <td class="label"><b>TOTAL</b></td>
+          <td><b>$ <span id="total">0.00</span></b></td>
+        </tr>
+      </table>
+    </div>
+    <!-- Footer Area -->
+    <div class="footer">
+      <div class="footer-contact">
+        If you have any questions concerning this invoice, please contact Myesha Woolery<br>
+        Mobile: 1-876-418-5375, Email: myeshawoolery27@gmail.com
+      </div>
+    </div>
+    <div class="thanks">
+      Thank you for your business!
+    </div>
+    <div class="page-number">Page 1/1</div>
+  </div>
+  <!-- Script for calculations, adding and clearing rows -->
+  <script>
+    function resizeOnEnter(e, textarea) {
+      if (e.key === 'Enter') {
+        setTimeout(function() {
+          textarea.style.height = "20px";
+          textarea.style.height = textarea.scrollHeight + "px";
+        }, 0);
+      }
+    }
+
+    function resetResizeOnEmpty(textarea) {
+      if (!textarea.value) {
+        textarea.style.height = "20px";
+      }
+    }
+
+    function calc() {
+      let table = document.getElementById('itemsTable').getElementsByTagName('tbody')[0];
+      let subtotal = 0;
+      for (let row of table.rows) {
+        let descTextarea = row.cells[0].querySelector('textarea');
+        if (descTextarea && !descTextarea.value) resetResizeOnEmpty(descTextarea);
+
+        let qtyInput = row.cells[1].children[0];
+        let priceInput = row.cells[2].children[0];
+        let qty = parseFloat(qtyInput.value) || 0;
+        let price = parseFloat(priceInput.value) || 0;
+        if (qty === 0) {
+          priceInput.value = '';
+          row.cells[3].textContent = '';
+        } else {
+          if (priceInput.value === '') price = 0;
+          let amt = qty * price;
+          row.cells[3].textContent = amt !== 0 ? amt.toFixed(2) : '';
+        }
+        subtotal += qty * price;
+      }
+      document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+      let taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+      let tax = subtotal * taxRate / 100;
+      document.getElementById('tax').textContent = tax.toFixed(2);
+      document.getElementById('total').textContent = (subtotal + tax).toFixed(2);
+    }
+
+    function addRow() {
+      let table = document.getElementById('itemsTable').getElementsByTagName('tbody')[0];
+      let row = table.insertRow();
+      row.innerHTML = `
+        <td class="desc-cell">
+          <textarea class="desc-input"
+            onchange="calc()"
+            onkeydown="resizeOnEnter(event, this)"
+            onkeyup="resetResizeOnEmpty(this)"></textarea>
+        </td>
+        <td><input type="number" min="1" value="" onchange="calc()"></td>
+        <td><input type="number" min="0" value="" onchange="calc()"></td>
+        <td class="amt-cell"></td>
+        <td class="no-print"><button type="button" class="add-row-btn" onclick="this.closest('tr').remove();calc();">-</button></td>
+      `;
+    }
+
+    // CLEAR & NEXT INVOICE FUNCTION
+    function clearAndNextInvoice() {
+      // Increment Invoice Number
+      let invoiceNo = document.getElementById('invoiceNo');
+      invoiceNo.value = (+invoiceNo.value || 1) + 1;
+
+      // Clear all table rows and re-add 7 empty rows
+      let table = document.getElementById('itemsTable').getElementsByTagName('tbody')[0];
+      table.innerHTML = '';
+      for (let i = 0; i < 7; i++) {
+        let row = table.insertRow();
+        row.innerHTML = `
+          <td class="desc-cell">
+            <textarea class="desc-input"
+              onchange="calc()"
+              onkeydown="resizeOnEnter(event, this)"
+              onkeyup="resetResizeOnEmpty(this)"></textarea>
+          </td>
+          <td><input type="number" min="1" value="" onchange="calc()"></td>
+          <td><input type="number" min="0" value="" onchange="calc()"></td>
+          <td class="amt-cell"></td>
+          <td class="no-print"><button type="button" class="add-row-btn" onclick="this.closest('tr').remove();calc();">-</button></td>
+        `;
+      }
+      // Reset totals and tax
+      document.getElementById('subtotal').textContent = "0.00";
+      document.getElementById('tax').textContent = "0.00";
+      document.getElementById('total').textContent = "0.00";
+      document.getElementById('taxRate').value = 0;
+    }
+
+    window.onload = function() {
+      calc();
+    };
+  </script>
+</body>
+</html>
